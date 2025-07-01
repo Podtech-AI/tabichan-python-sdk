@@ -18,7 +18,9 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
 ]
-dependencies = []
+dependencies = [
+    "requests>=2.32.4",
+]
 
 [project.scripts]
 tabichan = "tabichan.main:main"
@@ -53,5 +55,7 @@ addopts = "-v --cov=src/tabichan --cov-report=term-missing"
 dev = [
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
+    "pytest-mock>=3.14.1",
+    "responses>=0.25.7",
     "ruff>=0.12.1",
 ]

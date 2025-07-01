@@ -2,6 +2,6 @@
 
 __version__ = "0.1.0"
 
-from .main import main
+from .client import TabichanClient
 
-__all__ = ["main"]
+__all__ = ["TabichanClient"]
