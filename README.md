@@ -1,6 +1,6 @@
 # Tabichan Python SDK
 
-[![Tests](https://github.com/Podtech-AI/tabichan-python-sdk/actions/workflows/test.yml/badge.svg)](https://github.com/Podtech-AI/tabichan-python-sdk/actions/workflows/test.yml)
+[![Tests](https://github.com/Podtech-AI/tabichan-python-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/Podtech-AI/tabichan-python-sdk/actions/workflows/ci.yml)
 [![PyPI version](https://badge.fury.io/py/tabichan-python-sdk.svg)](https://badge.fury.io/py/tabichan-python-sdk)
 [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
