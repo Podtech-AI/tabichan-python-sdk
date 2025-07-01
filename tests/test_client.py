@@ -26,7 +26,7 @@ class TestTabichanClient:
     def test_client_initialization_missing_env_var(self):
         """Test client initialization when environment variable is not set"""
         api_key = os.getenv("TABICHAN_API_KEY")
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             TabichanClient(api_key)
 
     @responses.activate

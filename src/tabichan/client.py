@@ -1,13 +1,19 @@
+import os
 import sys
 import time
-from typing import Literal
+from typing import Literal, Optional
 import requests
 
 
 class TabichanClient:
-    def __init__(self, api_key: str):
-        if not isinstance(api_key, str):
-            raise TypeError("api_key must be a string")
+    def __init__(self, api_key: Optional[str] = None):
+        if api_key is None:
+            api_key = os.getenv("TABICHAN_API_KEY")
+
+        if api_key is None:
+            raise ValueError(
+                "API key is not set. Please set the TABICHAN_API_KEY environment variable or pass it as an argument to the TabichanClient constructor."
+            )
 
         self.api_key = api_key
         self.base_url = "https://tourism-api.podtech-ai.com/v1"
