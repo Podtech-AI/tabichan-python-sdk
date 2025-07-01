@@ -1,0 +1,7 @@
+[project]
+name = "tabichan-python-sdk"
+version = "0.1.0"
+description = "PodTech's Tabichan API SDK"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
