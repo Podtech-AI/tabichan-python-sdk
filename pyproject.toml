@@ -20,13 +20,6 @@ classifiers = [
 ]
 dependencies = []
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.0",
-    "pytest-cov>=4.0",
-    "ruff>=0.1.0",
-]
-
 [project.scripts]
 tabichan = "tabichan.main:main"
 
@@ -60,4 +53,5 @@ addopts = "-v --cov=src/tabichan --cov-report=term-missing"
 dev = [
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
+    "ruff>=0.12.1",
 ]
