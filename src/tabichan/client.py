@@ -4,6 +4,8 @@ import time
 from typing import Literal, Optional
 import requests
 
+from .__version__ import __version__
+
 
 class TabichanClient:
     def __init__(self, api_key: Optional[str] = None):
@@ -18,6 +20,11 @@ class TabichanClient:
         self.api_key = api_key
         self.base_url = "https://tourism-api.podtech-ai.com/v1"
         self.alternative_base_url = "https://tabichan.podtech-ai.com/v1"
+
+        self.default_header = {
+            "User-Agent": f"tabichan-python-sdk/{__version__}",
+            "x-api-key": self.api_key,
+        }
 
     def start_chat(
         self,
@@ -36,7 +43,7 @@ class TabichanClient:
         }
         response_chat = requests.post(
             self.base_url + "/chat",
-            headers={"x-api-key": self.api_key},
+            headers=self.default_header,
             json=body,
             timeout=3,
         )
@@ -46,7 +53,7 @@ class TabichanClient:
     def poll_chat(self, task_id: str) -> dict:
         response_poll = requests.get(
             self.base_url + f"/chat/poll?task_id={task_id}",
-            headers={"x-api-key": self.api_key},
+            headers=self.default_header,
             timeout=5,
         )
         response_poll.raise_for_status()
@@ -98,7 +105,7 @@ class TabichanClient:
     def get_image(self, id: str, country: Literal["japan", "france"] = "japan"):
         response_image = requests.get(
             self.base_url + f"/image?id={id}&country={country}",
-            headers={"x-api-key": self.api_key},
+            headers=self.default_header,
             timeout=30,
         )
         response_image.raise_for_status()
