@@ -1,5 +1,6 @@
 import pytest
 import json
+import asyncio
 from unittest.mock import Mock, AsyncMock, patch
 from tabichan.websocket_client import TabichanWebSocket
 
@@ -283,6 +284,187 @@ class TestTabichanWebSocket:
         await client.disconnect()
 
         mock_ws.close.assert_called_once_with(code=1000, reason="Client disconnecting")
+        assert client.ws is None
+        assert client.is_connected is False
+        assert client.current_question_id is None
+        assert client.connection_task is None
+
+    def test_emit_handler_exception(self):
+        """Test emit handles exceptions in event handlers"""
+        client = TabichanWebSocket("test_user", "test_api_key")
+
+        def error_handler(*args, **kwargs):
+            raise Exception("Handler error")
+
+        def good_handler(*args, **kwargs):
+            good_handler.called = True
+
+        good_handler.called = False
+
+        client.on("test_event", error_handler)
+        client.on("test_event", good_handler)
+
+        # Should not raise exception, but should continue to other handlers
+        with patch("builtins.print") as mock_print:
+            client.emit("test_event", "test_arg")
+            mock_print.assert_called_once_with(
+                "Error in event handler for test_event: Handler error"
+            )
+
+        # Good handler should still be called
+        assert good_handler.called is True
+
+    def test_off_nonexistent_event(self):
+        """Test removing handler for non-existent event"""
+        client = TabichanWebSocket("test_user", "test_api_key")
+
+        # Should not raise error
+        client.off("nonexistent_event")
+        client.off("nonexistent_event", Mock())
+
+    @pytest.mark.asyncio
+    async def test_connect_already_connecting(self):
+        """Test connect when already connecting"""
+        client = TabichanWebSocket("test_user", "test_api_key")
+
+        # Mock connection task that returns None
+        async def mock_connection():
+            return None
+
+        mock_task = asyncio.create_task(mock_connection())
+        client.connection_task = mock_task
+
+        result = await client.connect()
+
+        # Should return the existing task result
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_connect_timeout(self):
+        """Test connection timeout"""
+        client = TabichanWebSocket("test_user", "test_api_key")
+
+        with patch("websockets.connect") as mock_connect:
+            mock_connect.side_effect = asyncio.TimeoutError()
+
+            with patch("asyncio.wait_for") as mock_wait_for:
+                mock_wait_for.side_effect = asyncio.TimeoutError()
+
+                with pytest.raises(Exception, match="Connection timeout"):
+                    await client.connect()
+
+                assert client.connection_task is None
+
+    @pytest.mark.asyncio
+    async def test_connect_general_error(self):
+        """Test connection general error"""
+        client = TabichanWebSocket("test_user", "test_api_key")
+
+        error_handler = Mock()
+        client.on("error", error_handler)
+
+        test_error = Exception("Connection failed")
+
+        with patch("websockets.connect") as mock_connect:
+            mock_connect.side_effect = test_error
+
+            with patch("asyncio.wait_for") as mock_wait_for:
+                mock_wait_for.side_effect = test_error
+
+                with pytest.raises(Exception, match="Connection failed"):
+                    await client.connect()
+
+                assert client.connection_task is None
+                error_handler.assert_called_once_with(test_error)
+
+    @pytest.mark.asyncio
+    async def test_connect_success(self):
+        """Test successful connection"""
+        client = TabichanWebSocket("test_user", "test_api_key")
+
+        connected_handler = Mock()
+        client.on("connected", connected_handler)
+
+        mock_ws = AsyncMock()
+
+        with patch("asyncio.wait_for", return_value=mock_ws):
+            with patch.object(client, "_message_handler", new_callable=AsyncMock):
+                await client.connect()
+
+                assert client.ws == mock_ws
+                assert client.is_connected is True
+                connected_handler.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_message_handler_general_exception(self):
+        """Test message handler with general exception"""
+        client = TabichanWebSocket("test_user", "test_api_key")
+        client.is_connected = True
+        client.current_question_id = "q123"
+        client.connection_task = Mock()
+
+        error_handler = Mock()
+        client.on("error", error_handler)
+
+        test_error = Exception("General error")
+
+        # Mock WebSocket that raises general exception
+        mock_ws = Mock()
+        mock_ws.__aiter__ = Mock(side_effect=test_error)
+        client.ws = mock_ws
+
+        await client._message_handler()
+
+        assert client.is_connected is False
+        assert client.current_question_id is None
+        assert client.connection_task is None
+
+        error_handler.assert_called_once_with(test_error)
+
+    @pytest.mark.asyncio
+    async def test_send_message_ws_send_error(self):
+        """Test send_message when WebSocket send fails"""
+        client = TabichanWebSocket("test_user", "test_api_key")
+        client.ws = AsyncMock()
+        client.ws.closed = False
+        client.ws.send.side_effect = Exception("Send failed")
+
+        message = {"type": "test", "data": "hello"}
+
+        with pytest.raises(Exception, match="Failed to send message: Send failed"):
+            await client.send_message(message)
+
+    @pytest.mark.asyncio
+    async def test_disconnect_ws_already_closed(self):
+        """Test disconnect when WebSocket is already closed"""
+        client = TabichanWebSocket("test_user", "test_api_key")
+        mock_ws = AsyncMock()
+        mock_ws.closed = True
+        client.ws = mock_ws
+        client.is_connected = True
+        client.current_question_id = "q123"
+        client.connection_task = Mock()
+
+        await client.disconnect()
+
+        # Should not call close on already closed WebSocket
+        mock_ws.close.assert_not_called()
+        assert client.ws is None
+        assert client.is_connected is False
+        assert client.current_question_id is None
+        assert client.connection_task is None
+
+    @pytest.mark.asyncio
+    async def test_disconnect_no_ws(self):
+        """Test disconnect when no WebSocket exists"""
+        client = TabichanWebSocket("test_user", "test_api_key")
+        client.ws = None
+        client.is_connected = True
+        client.current_question_id = "q123"
+        client.connection_task = Mock()
+
+        await client.disconnect()
+
         assert client.ws is None
         assert client.is_connected is False
         assert client.current_question_id is None
