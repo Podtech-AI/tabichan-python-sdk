@@ -165,7 +165,7 @@ class TabichanWebSocket:
 
     async def send_message(self, message: Dict[str, Any]):
         """Send message to WebSocket"""
-        if not self.ws or self.ws.closed:
+        if not self.ws or (hasattr(self.ws, "closed") and self.ws.closed):
             raise Exception("WebSocket is not open")
 
         try:
@@ -175,7 +175,7 @@ class TabichanWebSocket:
 
     async def disconnect(self):
         """Disconnect from WebSocket"""
-        if self.ws and not self.ws.closed:
+        if self.ws and not (hasattr(self.ws, "closed") and self.ws.closed):
             await self.ws.close(code=1000, reason="Client disconnecting")
 
         self.ws = None
@@ -188,7 +188,7 @@ class TabichanWebSocket:
         if not self.ws:
             return "disconnected"
 
-        if self.ws.closed:
+        if hasattr(self.ws, "closed") and self.ws.closed:
             return "closed"
         elif self.is_connected:
             return "connected"

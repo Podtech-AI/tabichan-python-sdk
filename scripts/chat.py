@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from tabichan.client import TabichanClient
 
 client = TabichanClient()
