@@ -65,11 +65,16 @@ class TabichanWebSocket:
 
     async def _connect(self):
         """Internal connection method"""
-        ws_url = f"{self.base_url}/ws/chat/{self.user_id}?api_key={self.api_key}"
+        ws_url = f"{self.base_url}/ws/chat/{self.user_id}"
+
+        # Set up headers with API key
+        headers = {"x-api-key": self.api_key}
 
         try:
-            # Connect with 10 second timeout
-            self.ws = await asyncio.wait_for(websockets.connect(ws_url), timeout=10.0)
+            # Connect with 10 second timeout and headers
+            self.ws = await asyncio.wait_for(
+                websockets.connect(ws_url, additional_headers=headers), timeout=10.0
+            )
 
             self.is_connected = True
             self.emit("connected")

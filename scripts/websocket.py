@@ -21,6 +21,7 @@ class WebSocketTester:
     def __init__(self, user_id: str, api_key: str = None):
         self.user_id = user_id
         self.client = TabichanWebSocket(user_id, api_key)
+        self.client.set_base_url("ws://localhost:8085/v1")
         self.setup_event_handlers()
 
     def setup_event_handlers(self):
